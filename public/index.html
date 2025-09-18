@@ -2,37 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SOL/USDT Technical Dashboard</title>
+  <title>SOL/USDT Dashboard (Bybit)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d1117;
-      color: #f0f6fc;
-      margin: 0;
-      padding: 20px;
-    }
+    body { font-family: Arial, sans-serif; background: #0d1117; color: #f0f6fc; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #58a6ff; }
-    .card {
-      background: #161b22;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 15px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    pre {
-      background: #0d1117;
-      padding: 10px;
-      border-radius: 6px;
-      overflow-x: auto;
-    }
+    .card { background: #161b22; border-radius: 10px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    pre { background: #0d1117; padding: 10px; border-radius: 6px; overflow-x: auto; }
   </style>
 </head>
 <body>
-  <h1>SOL/USDT Technical Dashboard</h1>
+  <h1>SOL/USDT Dashboard (Bybit)</h1>
 
   <div class="card">
-    <h2>Current Price</h2>
-    <p id="price">Loading...</p>
+    <h2>Current Price: <span id="price">Loading...</span></h2>
+    <p>24h High: <span id="high24h">-</span></p>
+    <p>24h Low: <span id="low24h">-</span></p>
+    <p>24h Volume: <span id="volume24h">-</span></p>
+    <p>24h Turnover: <span id="turnover24h">-</span></p>
   </div>
 
   <div class="card">
@@ -46,22 +32,20 @@
         const res = await fetch('/api/technical-data');
         const data = await res.json();
 
-        // Update displayed values
         document.getElementById('price').textContent = data.currentPrice;
+        document.getElementById('high24h').textContent = data.high24h;
+        document.getElementById('low24h').textContent = data.low24h;
+        document.getElementById('volume24h').textContent = data.volume24h;
+        document.getElementById('turnover24h').textContent = data.turnover24h;
 
-        // Debug output
         document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
-
       } catch (err) {
         console.error("Error fetching data:", err);
         document.getElementById('rawJson').textContent = "Error fetching data.";
       }
     }
 
-    // Initial load
     loadData();
-
-    // Refresh every 15 seconds (15000 ms)
     setInterval(loadData, 15000);
   </script>
 </body>
