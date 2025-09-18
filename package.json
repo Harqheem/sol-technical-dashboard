@@ -1,5 +1,12 @@
 {
   "name": "sol-technical-dashboard",
   "version": "1.0.0",
-  "description": "SOL/USDT Real-time Technical Analysis Dashboard"
+  "description": "SOL/USDT Real-time Technical Analysis Dashboard",
+  "type": "module",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "start": "vercel dev"
+  }
 }
