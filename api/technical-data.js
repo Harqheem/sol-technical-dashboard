@@ -3,10 +3,15 @@
 export default async function handler(req, res) {
   try {
     const url = "https://api.bybit.com/v5/market/tickers?category=spot&symbol=SOLUSDT";
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; SOL-Dashboard/1.0)",
+        "Accept": "application/json"
+      }
+    });
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: `Bybit API error: ${response.statusText}` });
+      return res.status(response.status).json({ error: `Bybit API error: ${response.status} ${response.statusText}` });
     }
 
     const json = await response.json();
