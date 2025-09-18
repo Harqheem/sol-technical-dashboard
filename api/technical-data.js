@@ -1,5 +1,4 @@
 // api/technical-data.js
-import fetch from "node-fetch";
 
 export default async function handler(req, res) {
   try {
@@ -7,18 +6,18 @@ export default async function handler(req, res) {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`Bybit API error: ${response.status} ${response.statusText}`);
+      return res.status(response.status).json({ error: `Bybit API error: ${response.statusText}` });
     }
 
     const json = await response.json();
 
     if (json.retCode !== 0) {
-      throw new Error(json.retMsg || "Bybit returned error");
+      return res.status(500).json({ error: json.retMsg || "Bybit returned error" });
     }
 
     const ticker = json.result.list[0];
 
-    const result = {
+    return res.status(200).json({
       symbol: ticker.symbol,
       currentPrice: ticker.lastPrice,
       high24h: ticker.highPrice24h,
@@ -26,11 +25,9 @@ export default async function handler(req, res) {
       volume24h: ticker.volume24h,
       turnover24h: ticker.turnover24h,
       timestamp: Date.now()
-    };
-
-    res.status(200).json(result);
+    });
   } catch (err) {
     console.error("API error:", err);
-    res.status(500).json({ error: err.message || "Failed to fetch data from Bybit" });
+    return res.status(500).json({ error: err.message || "Failed to fetch data from Bybit" });
   }
 }
