@@ -5,10 +5,15 @@ export default async function handler(req, res) {
   try {
     const url = "https://api.bybit.com/v5/market/tickers?category=spot&symbol=SOLUSDT";
     const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Bybit API error: ${response.status} ${response.statusText}`);
+    }
+
     const json = await response.json();
 
     if (json.retCode !== 0) {
-      throw new Error(json.retMsg || "Bybit API error");
+      throw new Error(json.retMsg || "Bybit returned error");
     }
 
     const ticker = json.result.list[0];
@@ -25,7 +30,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch data from Bybit" });
+    console.error("API error:", err);
+    res.status(500).json({ error: err.message || "Failed to fetch data from Bybit" });
   }
 }
