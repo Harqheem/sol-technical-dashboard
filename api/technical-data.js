@@ -1,6 +1,8 @@
 // No imports needed - using built-in fetch
 
+// ==========================
 // Technical Analysis Functions
+// ==========================
 function calculateEMA(prices, period) {
   if (prices.length < period) return prices[prices.length - 1] || 0;
   const multiplier = 2 / (period + 1);
@@ -101,7 +103,7 @@ function detectCandlestickPattern(candle) {
   const upperShadowToBodyRatio = bodySize > 0 ? upperShadow / bodySize : upperShadow / (totalRange * 0.01);
   const lowerShadowToBodyRatio = bodySize > 0 ? lowerShadow / bodySize : lowerShadow / (totalRange * 0.01);
   
-  // DOJI PATTERNS (very small body - less than 5% of total range)
+  // DOJI PATTERNS
   if (bodyToRangeRatio < 0.05) {
     if (upperShadow > totalRange * 0.4 && lowerShadow > totalRange * 0.4) {
       return 'Long-Legged Doji';
@@ -115,7 +117,7 @@ function detectCandlestickPattern(candle) {
     return 'Doji';
   }
   
-  // MARUBOZU PATTERNS (large body with minimal shadows)
+  // MARUBOZU
   if (bodyToRangeRatio > 0.9) {
     if (close > open) {
       if (upperShadow < totalRange * 0.05 && lowerShadow < totalRange * 0.05) {
@@ -140,22 +142,22 @@ function detectCandlestickPattern(candle) {
     }
   }
   
-  // HAMMER PATTERNS (small body in upper part, long lower shadow)
+  // HAMMER
   if (lowerShadow > bodySize * 2 && upperShadow < bodySize * 0.5 && bodyTop > (low + totalRange * 0.6)) {
     return close > open ? 'Hammer' : 'Hanging Man';
   }
   
-  // INVERTED HAMMER PATTERNS (small body in lower part, long upper shadow)
+  // INVERTED HAMMER
   if (upperShadow > bodySize * 2 && lowerShadow < bodySize * 0.5 && bodyBottom < (low + totalRange * 0.4)) {
     return close > open ? 'Inverted Hammer' : 'Shooting Star';
   }
   
-  // SPINNING TOP (small body in middle, both shadows present)
+  // SPINNING TOP
   if (bodyToRangeRatio < 0.3 && upperShadow > bodySize * 0.5 && lowerShadow > bodySize * 0.5) {
     return close > open ? 'Bullish Spinning Top' : 'Bearish Spinning Top';
   }
   
-  // Basic patterns based on body size
+  // Basic patterns
   if (bodyToRangeRatio > 0.6) {
     return close > open ? 'Strong Bullish' : 'Strong Bearish';
   }
@@ -210,7 +212,10 @@ function generateOrderBook(currentPrice) {
   };
 }
 
-export default async function handler(req, res) {
+// ==========================
+// CommonJS Exported Handler
+// ==========================
+module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -228,9 +233,8 @@ export default async function handler(req, res) {
     let candles = [];
     
     try {
-      console.log('🌍 Connecting to Binance API from Vercel servers (Washington DC)...');
+      console.log('🌍 Connecting to Binance API from Vercel servers...');
       
-      // Get current price with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
@@ -245,10 +249,9 @@ export default async function handler(req, res) {
       if (priceResponse.ok) {
         const priceData = await priceResponse.json();
         currentPrice = parseFloat(priceData.price);
-        console.log(`🎯 Live SOL price: $${currentPrice} (from Binance)`);
+        console.log(`🎯 Live SOL price: $${currentPrice}`);
       }
       
-      // Get 15-minute kline data
       const klineResponse = await fetch('https://api.binance.com/api/v3/klines?symbol=SOLUSDT&interval=15m&limit=150', {
         signal: controller.signal,
         headers: { 
@@ -270,95 +273,45 @@ export default async function handler(req, res) {
             
             return {
               timestamp: closeTime,
-              openTime: openTime,
-              closeTime: closeTime,
               open: parseFloat(open),
               high: parseFloat(high),
               low: parseFloat(low),
               close: parseFloat(close),
               volume: parseFloat(volume),
-              numberOfTrades: numberOfTrades,
-              openTimeFormatted: openDate.toLocaleTimeString('en-US', { 
-                hour12: false, hour: '2-digit', minute: '2-digit' 
-              }),
-              closeTimeFormatted: closeDate.toLocaleTimeString('en-US', { 
-                hour12: false, hour: '2-digit', minute: '2-digit' 
-              }),
-              dateFormatted: closeDate.toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric'
-              })
+              numberOfTrades,
+              openTimeFormatted: openDate.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+              closeTimeFormatted: closeDate.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+              dateFormatted: closeDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
             };
           });
           
-          console.log(`📊 SUCCESS: Fetched ${candles.length} real 15m candles from Binance!`);
-          console.log(`⏰ Latest candle: ${candles[candles.length - 1].openTimeFormatted} - ${candles[candles.length - 1].closeTimeFormatted}`);
+          console.log(`📊 SUCCESS: Fetched ${candles.length} 15m candles`);
         }
       }
-      
     } catch (fetchError) {
       console.log(`⚠️ Binance API error: ${fetchError.message}`);
     }
     
-    // Generate realistic fallback data if needed
     if (!candles || candles.length === 0) {
-      console.log('📊 Creating realistic fallback 15m candle data...');
-      const now = new Date();
-      const currentMinute = now.getMinutes();
-      const roundedMinute = Math.floor(currentMinute / 15) * 15;
-      const lastCandleClose = new Date(now);
-      lastCandleClose.setMinutes(roundedMinute, 0, 0);
-      if (now.getTime() > lastCandleClose.getTime()) {
-        lastCandleClose.setMinutes(lastCandleClose.getMinutes() - 15);
-      }
-      
+      console.log('📊 Generating fallback candles...');
       candles = Array.from({length: 150}, (_, i) => {
-        const candleCloseTime = new Date(lastCandleClose);
-        candleCloseTime.setMinutes(candleCloseTime.getMinutes() - (i * 15));
-        const candleOpenTime = new Date(candleCloseTime);
-        candleOpenTime.setMinutes(candleOpenTime.getMinutes() - 15);
-        
-        const variation = (Math.random() - 0.5) * 0.08;
-        const basePrice = currentPrice * (1 + variation * (1 - i * 0.01));
-        const volatility = 0.015;
-        let high = basePrice * (1 + Math.random() * volatility);
-        let low = basePrice * (1 - Math.random() * volatility);
+        const basePrice = currentPrice * (1 + (Math.random() - 0.5) * 0.05);
+        const high = basePrice * (1 + Math.random() * 0.01);
+        const low = basePrice * (1 - Math.random() * 0.01);
         const open = low + (high - low) * Math.random();
-        let close = i === 0 ? currentPrice : (low + (high - low) * Math.random());
-        
-        if (close > high) high = close * 1.001;
-        if (close < low) low = close * 0.999;
-        
-        const adjustedHigh = Math.max(high, open, close);
-        const adjustedLow = Math.min(low, open, close);
-        const volume = 30000 + Math.random() * 150000;
-        
+        const close = low + (high - low) * Math.random();
         return {
-          timestamp: candleCloseTime.getTime(),
-          openTime: candleOpenTime.getTime(),
-          closeTime: candleCloseTime.getTime(),
-          open: parseFloat(open.toFixed(4)),
-          high: parseFloat(adjustedHigh.toFixed(4)),
-          low: parseFloat(adjustedLow.toFixed(4)),
-          close: parseFloat(close.toFixed(4)),
-          volume: parseFloat(volume.toFixed(0)),
+          timestamp: Date.now() - i * 900000,
+          open, high, low, close,
+          volume: 50000 + Math.random() * 50000,
           numberOfTrades: 100 + Math.floor(Math.random() * 500),
-          openTimeFormatted: candleOpenTime.toLocaleTimeString('en-US', { 
-            hour12: false, hour: '2-digit', minute: '2-digit' 
-          }),
-          closeTimeFormatted: candleCloseTime.toLocaleTimeString('en-US', { 
-            hour12: false, hour: '2-digit', minute: '2-digit' 
-          }),
-          dateFormatted: candleCloseTime.toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric'
-          })
+          openTimeFormatted: '00:00',
+          closeTimeFormatted: '00:15',
+          dateFormatted: 'N/A'
         };
-      });
-      
-      // Reverse to get chronological order
-      candles.reverse();
+      }).reverse();
     }
     
-    // Calculate all technical indicators using real data
     const closePrices = candles.map(c => c.close);
     const last5Candles = candles.slice(-5);
     
@@ -380,71 +333,39 @@ export default async function handler(req, res) {
     }));
     
     const orderBook = generateOrderBook(currentPrice);
-    
-    // Higher timeframe analysis
     const h1Ema99 = calculateEMA(closePrices.slice(-240), 99);
     const h4Ema99 = calculateEMA(closePrices.slice(-960), 99);
     
-    // Compile all technical data
     const technicalData = {
       currentPrice: currentPrice.toFixed(4),
-      
-      last5Candles: {
-        ohlc: last5Candles.map(c => ({
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-          openTime: c.openTimeFormatted,
-          closeTime: c.closeTimeFormatted,
-          timeWindow: `${c.openTimeFormatted}-${c.closeTimeFormatted}`,
-          date: c.dateFormatted,
-          volume: (c.volume / 1000).toFixed(1) + 'k',
-          trades: c.numberOfTrades || 'N/A',
-          timestamp: c.timestamp
-        })),
-        timestamps: last5Candles.map(c => `${c.dateFormatted} ${c.closeTimeFormatted}`)
-      },
-      
       ema7: ema7.toFixed(4),
-      ema25: ema25.toFixed(4), 
+      ema25: ema25.toFixed(4),
       ema99: ema99.toFixed(4),
-      
       atr14: atr14.toFixed(4),
-      
       bbUpper: bb.upper.toFixed(4),
       bbMiddle: bb.middle.toFixed(4),
       bbLower: bb.lower.toFixed(4),
-      
       psarValue: psar.value.toFixed(4),
       psarPosition: psar.position,
-      
       volumes: {
-        v1: (volumes[4] / 1000).toFixed(1) + 'k', // Latest candle
+        v1: (volumes[4] / 1000).toFixed(1) + 'k',
         v2: (volumes[3] / 1000).toFixed(1) + 'k',
-        v3: (volumes[2] / 1000).toFixed(1) + 'k', 
+        v3: (volumes[2] / 1000).toFixed(1) + 'k',
         v4: (volumes[1] / 1000).toFixed(1) + 'k',
-        v5: (volumes[0] / 1000).toFixed(1) + 'k', // Oldest candle
+        v5: (volumes[0] / 1000).toFixed(1) + 'k',
         averageVolume: (averageVolume / 1000).toFixed(1) + 'k'
       },
-      
-      candlePatterns: candlePatterns.reverse(), // Latest first
-      
-      orderBook: orderBook,
-      
+      candlePatterns: candlePatterns.reverse(),
+      orderBook,
       htfTrends: {
         h1Trend: currentPrice > h1Ema99 ? 'Bullish' : 'Bearish',
         h1Position: currentPrice > h1Ema99 ? 'Above' : 'Below',
-        h4Trend: currentPrice > h4Ema99 ? 'Bullish' : 'Bearish', 
+        h4Trend: currentPrice > h4Ema99 ? 'Bullish' : 'Bearish',
         h4Position: currentPrice > h4Ema99 ? 'Above' : 'Below'
       },
-      
       timestamp: Date.now(),
       symbol: 'SOL/USDT'
     };
-
-    console.log('✅ Technical analysis completed successfully');
-    console.log(`💰 Final data: Price=$${technicalData.currentPrice} | EMA7=$${technicalData.ema7} | PSAR=${technicalData.psarPosition}`);
     
     res.status(200).json(technicalData);
 
@@ -456,4 +377,4 @@ export default async function handler(req, res) {
       timestamp: Date.now()
     });
   }
-}
+};

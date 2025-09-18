@@ -2,7 +2,6 @@
   "name": "sol-technical-dashboard",
   "version": "1.0.0",
   "description": "SOL/USDT Real-time Technical Analysis Dashboard",
-  "type": "module",
   "engines": {
     "node": "22.x"
   },
