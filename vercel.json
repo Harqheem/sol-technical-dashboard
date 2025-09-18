@@ -1,18 +1,7 @@
 {
-  "version": 2,
   "functions": {
     "api/technical-data.js": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@3"
     }
-  },
-  "routes": [
-    {
-      "src": "/api/technical-data",
-      "dest": "/api/technical-data.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
-  ]
+  }
 }
