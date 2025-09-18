@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/technical-data.js": {
-      "runtime": "@vercel/node@3"
-    }
-  }
-}

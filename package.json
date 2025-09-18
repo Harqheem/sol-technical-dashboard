@@ -1,12 +1,5 @@
 {
   "name": "sol-technical-dashboard",
   "version": "1.0.0",
-  "description": "SOL/USDT Technical Analysis Dashboard",
-  "type": "module",
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  },
-  "engines": {
-    "node": "18.x"
-  }
+  "description": "SOL/USDT Real-time Technical Analysis Dashboard"
 }
